@@ -688,6 +688,16 @@ function App() {
 export default App
 ```
 
+## Full react project (Mega Blog)
+
+### Setting up env varibles 
+
+Using appwrite as a backend service
+
+### creating conf.js file
+&rarr; sometimes writing ```import.meta.env.VITE_APPWRITE_URL``` may not load the env variables correctly, hence the whole code wouldn't work, thus we create conf.js and export many key-value variables
+(**Production Grade Approach**)
+
 
 
 
