@@ -4,7 +4,7 @@ const initialStatus = {
   status: false,
   userData: null,
 };
-
+//All these reducers are actually promises thus .then and .catch can be applied
 const authSlice = createSlice({
   name: "auth",
   initialStatus,
