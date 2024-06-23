@@ -698,6 +698,231 @@ Using appwrite as a backend service
 &rarr; sometimes writing ```import.meta.env.VITE_APPWRITE_URL``` may not load the env variables correctly, hence the whole code wouldn't work, thus we create conf.js and export many key-value variables
 (**Production Grade Approach**)
 
+### Configuring Appwrite to be used as BAAS
+We may require to shift the entire code to a new BAAS, thus we must create a config file having basic CRUD operations which would be exported, thus if we need to change our backend service in the future, we would only require to change the config file
+
+Also we create another file 'auth.js' to write our authentication services such as login,logout,createAccount and getCurrentUser
+
+### Configuring Store for this project
+First creating authSlice to write login and logout reducers
+
+### Creating a loading page
+```javascript
+import React, { useState,useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import './App.css'
+import authService from "./appwrite/auth"
+import { login,logout } from './store/authSlice'
+import { Footer, Header } from './components'
 
 
+function App() {
+  const [loading, setLoading] = useState(true)
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    authService.getCurrentUser()
+    .then((userData) => {
+      if (userData) {
+        dispatch(login({userData}))
+      }
+      else{
+        dispatch(logout())
+      }
+    })
+    .finally(() => setLoading(false)) 
+  }, [])
+  
+  return !loading ? (
+    <div className='min-h-screen flex flex-wrap content-between bg-gray-400'>
+      <div className='w-full block'>
+        <Header/>
+        <main>
+         TODO :  {/*<Outlet/>*/ }
+        </main>
+        <Footer/>
+      </div>
+    </div>
+  ) : null
+}
+
+export default App
+```
+### Making Components
+
+#### Creating Header component, along with LogoutBtn, It would be present if user is not logged in
+
+&rarr; Header.jsx
+```javascript
+import React from 'react'
+import {Container, Logo, LogoutBtn} from '../index'
+import { Link } from 'react-router-dom'
+import {useSelector} from 'react-redux'
+import { useNavigate } from 'react-router-dom'
+
+//useNavigate is used to forcefully navigate to a certain webpage
+
+function Header() {
+  const authStatus = useSelector((state) => state.auth.status)
+  //authStatus is used to check which components to show in nav bar and which not to
+  const navigate = useNavigate()
+
+  const navItems = [
+    {
+      name: 'Home',
+      slug: "/",
+      active: true
+    }, 
+    {
+      name: "Login",
+      slug: "/login",
+      active: !authStatus,
+  },
+  {
+      name: "Signup",
+      slug: "/signup",
+      active: !authStatus,
+  },
+  {
+      name: "All Posts",
+      slug: "/all-posts",
+      active: authStatus,
+  },
+  {
+      name: "Add Post",
+      slug: "/add-post",
+      active: authStatus,
+  },
+  ]
+
+// wrapped inside a container for combined CSS styling
+  return (
+    <header className='py-3 shadow bg-gray-500'>
+      <Container>
+        <nav className='flex'>
+          <div className='mr-4'>
+            <Link to='/'>
+              <Logo width='70px'   />
+
+              </Link>
+          </div>
+          <ul className='flex ml-auto'>
+            {navItems.map((item) => 
+            item.active ? (
+              <li key={item.name}>
+                <button
+                onClick={() => navigate(item.slug)}
+                className='inline-bock px-6 py-2 duration-200 hover:bg-blue-100 rounded-full'
+                >{item.name}</button>
+              </li>
+            ) : null
+            )}
+            {authStatus && (
+              <li>
+                <LogoutBtn />
+              </li>
+            )}
+          </ul>
+        </nav>
+        </Container>
+    </header>
+  )
+}
+
+export default Header
+```
+&rarr; Logout Btn
+```javascript
+import React from 'react'
+import {useDispatch} from 'react-redux'
+import authService from '../../appwrite/auth'
+import {logout} from '../../store/authSlice'
+
+function LogoutBtn() {
+    const dispatch = useDispatch()
+    const logoutHandler = () => {
+        authService.logout().then(() => {
+            dispatch(logout())
+        })
+    }
+    //authService.logout() returns a promise thus can be resolved using .then(), now we dispatch(logout()) to update our state
+  return (
+    <button
+    className='inline-bock px-6 py-2 duration-200 hover:bg-blue-100 rounded-full'
+    onClick={logoutHandler}
+    >Logout</button>
+  )
+}
+export default LogoutBtn
+```
+&rarr; We use forwardRef to expose a DOM node to parent component with a ref
+
+There can be 2 different syntax to write 
+
+**Syntax 1**
+```javascript
+import React, {useId} from 'react'
+
+const Input = React.forwardRef( function Input({
+    label,
+    type = "text",
+    className = "",
+    ...props
+}, ref){
+    const id = useId()
+    return (
+        <div className='w-full'>
+            {label && <label 
+            className='inline-block mb-1 pl-1' 
+            htmlFor={id}>
+                {label}
+            </label>
+            }
+            <input
+            type={type}
+            className={`px-3 py-2 rounded-lg bg-white text-black outline-none focus:bg-gray-50 duration-200 border border-gray-200 w-full ${className}`}
+            ref={ref}
+            {...props}
+            id={id}
+            />
+        </div>
+    )
+})
+
+export default Input
+```
+
+**Syntax 2**
+```javascript
+import React, {useId} from 'react'
+
+function Select({
+    options,
+    label,
+    className = '',
+    ...props
+},ref) {
+    const id = useId()
+  return (
+    <div className='w-full'>
+      {label && <label htmlFor={id} className=''></label>}
+      <select {...props}
+      id={id}
+      ref={ref}
+      className={`px-3 py-2 rounded-lg bg-white text-black outline-none focus:bg-gray-50 duration-200 border border-gray-200 w-full ${className}`}>
+
+        {options?.map((option)=> (
+            <option key={option} value={option}>
+                {option}
+            </option>
+        ))}
+
+      </select>
+    </div>
+  )
+}
+
+export default React.forwardRef(Select)
+
+```
 
