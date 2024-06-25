@@ -1,7 +1,5 @@
 import React, {useId} from 'react'
 
-// #Syntax type 1 of using forwardRef
-
 const Input = React.forwardRef( function Input({
     label,
     type = "text",
